@@ -9,7 +9,7 @@ the loop has actually run against a baseline).
 | Phase | Focus | Depends on | Status |
 |---|---|---|---|
 | 0 | Repo & environment scaffolding | — | ✅ done |
-| 1 | Materials core (descriptors, space) | 0 | not started |
+| 1 | Materials core (descriptors, space) | 0 | ✅ done |
 | 2 | Surrogate model & acquisition | 1 | not started |
 | 3 | Evaluation backends | 1 | not started |
 | 4 | Closed-loop orchestrator | 2, 3 | not started |
@@ -24,6 +24,15 @@ the loop has actually run against a baseline).
 - [x] CI workflow configured (pytest + ruff on push/PR)
 - [ ] Pushed to GitHub with your own commit identity (your step — see setup notes)
 - [ ] Materials Project account + API key registered (needed by Phase 3, worth doing now)
+
+## Phase 1 — definition of done
+
+- [x] `descriptors.py` — validated composition dataclass, 14-dim feature vector
+- [x] `space.py` — combinatorial composition-grid generator
+- [x] Tolerance/octahedral factor checked against 3 known real materials (MAPbI3, CsPbBr3, FASnI3)
+- [x] Invalid input (bad fractions, unknown ions) raises a clear error instead of silently producing garbage
+- [x] Whole generated grid produces finite features with no NaNs (11/11 tests passing)
+- [ ] `crystal_builder.py` intentionally skipped — only needed for real DFT (Phase 7 stretch), not for mock-mode v1
 
 ## Notes / known modeling limitations (carried forward from planning)
 
