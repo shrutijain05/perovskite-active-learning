@@ -1,0 +1,31 @@
+# Environments
+.venv/
+venv/
+env/
+.env
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Local data / benchmark cache (Phase 3 will populate this)
+data/cache/
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
