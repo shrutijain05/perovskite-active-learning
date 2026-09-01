@@ -10,7 +10,7 @@ the loop has actually run against a baseline).
 |---|---|---|---|
 | 0 | Repo & environment scaffolding | — | ✅ done |
 | 1 | Materials core (descriptors, space) | 0 | ✅ done |
-| 2 | Surrogate model & acquisition | 1 | not started |
+| 2 | Surrogate model & acquisition | 1 | ✅ done |
 | 3 | Evaluation backends | 1 | not started |
 | 4 | Closed-loop orchestrator | 2, 3 | not started |
 | 5 | API + CI/CD | 4 | not started |
@@ -33,6 +33,15 @@ the loop has actually run against a baseline).
 - [x] Invalid input (bad fractions, unknown ions) raises a clear error instead of silently producing garbage
 - [x] Whole generated grid produces finite features with no NaNs (11/11 tests passing)
 - [ ] `crystal_builder.py` intentionally skipped — only needed for real DFT (Phase 7 stretch), not for mock-mode v1
+
+## Phase 2 — definition of done
+
+- [x] `gp_model.py` — validated GP wrapper (rejects wrong feature shape, predict-before-fit)
+- [x] `acquisition.py` — Target-EI, UCB, LCB, plus a `score_candidates()` dispatcher for Phase 4
+- [x] `uncertainty.py` — empirical coverage / calibration check
+- [x] Uncertainty confirmed to shrink at observed points and grow far from data
+- [x] Acquisition scoring confirmed by hand-derivation, not just "it ran" (9 new tests, 20/20 passing)
+- [x] `N_FEATURES` centralized in `perov_core.descriptors` instead of hardcoded in two places
 
 ## Notes / known modeling limitations (carried forward from planning)
 
