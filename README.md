@@ -25,6 +25,3 @@ api/           FastAPI service
 tests/         pytest suite
 ```
 
-## License
-
-MIT — see `LICENSE`.
