@@ -21,8 +21,9 @@ dist/
 # Notebooks
 .ipynb_checkpoints/
 
-# Local data / benchmark cache (Phase 3 will populate this)
+# Local data / benchmark cache (Phase 3)
 data/cache/
+dft_runner/reference_data/cache.json
 *.log
 
 # OS / editor

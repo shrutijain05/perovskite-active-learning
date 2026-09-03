@@ -11,7 +11,7 @@ the loop has actually run against a baseline).
 | 0 | Repo & environment scaffolding | — | ✅ done |
 | 1 | Materials core (descriptors, space) | 0 | ✅ done |
 | 2 | Surrogate model & acquisition | 1 | ✅ done |
-| 3 | Evaluation backends | 1 | not started |
+| 3 | Evaluation backends | 1 | ✅ done |
 | 4 | Closed-loop orchestrator | 2, 3 | not started |
 | 5 | API + CI/CD | 4 | not started |
 | 6 | Benchmarking, docs, polish | 4, 5 | not started |
@@ -42,6 +42,15 @@ the loop has actually run against a baseline).
 - [x] Uncertainty confirmed to shrink at observed points and grow far from data
 - [x] Acquisition scoring confirmed by hand-derivation, not just "it ran" (9 new tests, 20/20 passing)
 - [x] `N_FEATURES` centralized in `perov_core.descriptors` instead of hardcoded in two places
+
+## Phase 3 — definition of done
+
+- [x] `base.py` — shared `EvaluationBackend` protocol both evaluators implement
+- [x] `benchmark_engine.py` — offline evaluator: all 18 pure end-members (3 A x 2 B x 3 X) hardcoded, multilinear interpolation with a real optical bowing correction (Eg = linear − b·x·(1−x)), local disk caching. Bowing parameters for X-site (halide) mixing are literature-cited (MA: 0.33 eV, per Trends in Chemistry 2020 — see code comments); A/B-site bowing parameters are flagged placeholders, not citations.
+- [x] `materials_project_backend.py` — live MP evaluator with graceful fallback: no key, no internet, an unsearchable composition (mixed, or organic A-site), or any live-query exception all fall through to the offline backend rather than crashing. **The live query path itself is unverified — no real API key was available to test it against.** The fallback mechanism is fully tested (5/5 passing).
+- [x] `log_parser.py` — real bug caught and fixed in Phase 3's first pass (HOMO/LUMO regex matching inside QE's combined summary line); still holds
+- [x] 36/36 tests passing, including a hand-verified bowing calculation (not just "it ran")
+- [x] `mp-api` added as an optional dependency group (`pip install -e ".[live]"`) rather than a hard requirement, since the default install and test suite don't need it
 
 ## Notes / known modeling limitations (carried forward from planning)
 
