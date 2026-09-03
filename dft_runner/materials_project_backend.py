@@ -39,11 +39,35 @@ from perov_core.descriptors import PerovskiteComposition
 # searched for directly.
 _MP_SEARCHABLE_A_SITE = {"Cs"}
 
+_dotenv_loaded = False
+
+
+def _ensure_dotenv_loaded() -> None:
+    """Loads variables from a .env file (if present) into os.environ, once
+    per process. Without this, MP_API_KEY sitting in .env is invisible to
+    os.environ.get() unless the shell exported it first — an easy trap
+    that makes "I added the key" not actually take effect. Silently a
+    no-op if python-dotenv isn't installed or no .env file is found, so
+    this never breaks anything for someone not using the live backend."""
+    global _dotenv_loaded
+    if _dotenv_loaded:
+        return
+    try:
+        from dotenv import find_dotenv, load_dotenv
+
+        load_dotenv(find_dotenv(usecwd=True))
+    except ImportError:
+        pass
+    _dotenv_loaded = True
+
 
 class MaterialsProjectEvaluationBackend:
-    """Tries a live Materials Project lookup; falls back to the offline
-    BenchmarkEvaluationBackend on any failure. Implements the shared
-    EvaluationBackend protocol (see base.py).
+    """Tries a live Materials Project lookup first; falls back to the
+    offline BenchmarkEvaluationBackend on any failure — no key, no
+    internet, no matching MP entry, a request error, anything. This is
+    already "live-first, offline-fallback": evaluate() always attempts
+    _try_live_lookup() before ever touching self.fallback. Implements the
+    shared EvaluationBackend protocol (see base.py).
     """
 
     def __init__(
@@ -51,6 +75,8 @@ class MaterialsProjectEvaluationBackend:
         api_key: Optional[str] = None,
         fallback: Optional[BenchmarkEvaluationBackend] = None,
     ):
+        if api_key is None:
+            _ensure_dotenv_loaded()
         self.api_key = api_key or os.environ.get("MP_API_KEY")
         self.fallback = fallback or BenchmarkEvaluationBackend()
 

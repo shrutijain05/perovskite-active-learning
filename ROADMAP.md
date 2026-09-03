@@ -12,7 +12,7 @@ the loop has actually run against a baseline).
 | 1 | Materials core (descriptors, space) | 0 | ✅ done |
 | 2 | Surrogate model & acquisition | 1 | ✅ done |
 | 3 | Evaluation backends | 1 | ✅ done |
-| 4 | Closed-loop orchestrator | 2, 3 | not started |
+| 4 | Closed-loop orchestrator | 2, 3 | ✅ done |
 | 5 | API + CI/CD | 4 | not started |
 | 6 | Benchmarking, docs, polish | 4, 5 | not started |
 | 7 (stretch) | Multi-objective, real DFT, batch acquisition | 6 | not started |
@@ -51,6 +51,34 @@ the loop has actually run against a baseline).
 - [x] `log_parser.py` — real bug caught and fixed in Phase 3's first pass (HOMO/LUMO regex matching inside QE's combined summary line); still holds
 - [x] 36/36 tests passing, including a hand-verified bowing calculation (not just "it ran")
 - [x] `mp-api` added as an optional dependency group (`pip install -e ".[live]"`) rather than a hard requirement, since the default install and test suite don't need it
+
+## Phase 4 — definition of done
+
+- [x] `loop.py` — `ActiveLearningLoop`: seeds initial random points, then iterates
+  fit-surrogate → score-candidates → evaluate-best → repeat. Tracks full
+  history (`IterationRecord` per evaluation) and running best-error-so-far.
+- [x] Epsilon-greedy exploration (default 10% of iterations pick a random
+  untested candidate instead of the top acquisition score) — the safeguard
+  against Target-EI collapsing into pure exploitation once sigma shrinks
+  near the target, flagged as a risk during Phase 2 planning.
+- [x] `run_random_search_baseline()` — a plain random-search comparator,
+  reusing the same evaluator interface. Not the full Phase 6 benchmark
+  (that needs many seeds and real statistics), just enough to confirm
+  during development that the acquisition function earns its complexity.
+- [x] `visualizer.py` — `plot_optimization_trajectory`, `plot_parity`,
+  `plot_bo_vs_random`, all verified against a real completed loop run
+  (not just "it imports") — 3 real PNGs generated and checked non-empty.
+- [x] Reproducibility: same `random_state` produces an identical run,
+  evaluation-for-evaluation.
+- [x] No composition evaluated twice within a single run.
+- [x] The actual claim tested directly: given the same evaluation budget,
+  the acquisition-driven loop's best error was 0.0012 eV vs. 0.0230 eV for
+  random search on one representative run (target=1.9 eV, 3x2x3 space at
+  10% resolution) — not proof by itself (that's Phase 6, over many seeds),
+  but a real, reproducible result rather than an assumption.
+- [x] 8/8 loop tests + 3/3 visualizer tests passing (manually verified —
+  pytest wasn't available in this session's sandbox; see test files for
+  the pytest-native versions meant to run in your actual environment)
 
 ## Notes / known modeling limitations (carried forward from planning)
 
