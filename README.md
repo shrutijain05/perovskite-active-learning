@@ -1,4 +1,4 @@
-# Perov-ActiveLearn
+# Perovskite Active Learning
 
 Closed-loop active learning and Bayesian optimization for perovskite bandgap
 engineering. Guides a Gaussian Process surrogate toward compositions that hit
