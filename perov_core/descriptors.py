@@ -31,7 +31,7 @@ ELECTRONEGATIVITY: Dict[str, float] = {
 }
 
 _KNOWN_A_SITE = {"Cs", "MA", "FA"}
-_KNOWN_B_SITE = {"Pb", "Sn"}
+_KNOWN_B_SITE = {"Pb", "Sn", "Ge"}  # Ge is included for completeness, but not used in the current search space
 _KNOWN_X_SITE = {"Cl", "Br", "I"}
 
 N_FEATURES = 14  # length of the vector returned by compute_features() below

@@ -18,15 +18,15 @@ the same reason: MP indexes specific ordered structures, not arbitrary
 fractional alloys. Everything outside that narrow case routes straight to
 the offline backend without even trying a live call.
 
-HONESTY NOTE — unlike every other module in this project, the *live*
-query path (_query_materials_project) has not been run against a real
-Materials Project account: building this required a working MP_API_KEY,
-which wasn't available while writing it. What IS fully tested is the
-fallback mechanism itself — every way this can fail gracefully. Treat
-_query_materials_project as a best-effort starting point: confirm it
-works once you have your own key set up (Phase 0 already asked you to
-get one), and expect to adjust field/method names if the mp-api client's
-interface has moved since this was written.
+HONESTY NOTE / CHANGELOG — the live query path (_query_materials_project)
+was originally written without access to a real Materials Project account
+and shipped with a real bug: it passed `formula=formula` (a bare string)
+to mpr.materials.summary.search(), but every documented example and
+working sample passes `formula=[formula]` (a list) — the client validates
+this and raises, which the broad except-all below then swallowed
+silently, making a real bug indistinguishable from an expected fallback.
+Fixed now. If it still doesn't work for you, pass debug=True (see below)
+to see the actual exception instead of guessing.
 """
 
 import os
@@ -68,34 +68,56 @@ class MaterialsProjectEvaluationBackend:
     already "live-first, offline-fallback": evaluate() always attempts
     _try_live_lookup() before ever touching self.fallback. Implements the
     shared EvaluationBackend protocol (see base.py).
+
+    Pass debug=True to print the actual exception (and whether a live
+    call was even attempted) instead of silently falling back — without
+    it, a real bug and an expected fallback look identical from the
+    outside, which is exactly what made the original formula-list bug
+    invisible.
     """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         fallback: Optional[BenchmarkEvaluationBackend] = None,
+        debug: bool = False,
     ):
         if api_key is None:
             _ensure_dotenv_loaded()
         self.api_key = api_key or os.environ.get("MP_API_KEY")
         self.fallback = fallback or BenchmarkEvaluationBackend()
+        self.debug = debug
+        self.last_source: Optional[str] = None  # "live" or "fallback", set after each evaluate()
 
     def evaluate(self, composition: PerovskiteComposition) -> float:
         live_value = self._try_live_lookup(composition)
         if live_value is not None:
+            self.last_source = "live"
             return live_value
+        self.last_source = "fallback"
         return self.fallback.evaluate(composition)
 
     def _try_live_lookup(self, composition: PerovskiteComposition) -> Optional[float]:
-        if not self.api_key or not self._is_mp_searchable(composition):
+        if not self.api_key:
+            if self.debug:
+                print("[MP debug] no api_key set — skipping live lookup, going to fallback")
+            return None
+        if not self._is_mp_searchable(composition):
+            if self.debug:
+                print(
+                    f"[MP debug] composition {composition} is outside live-searchable scope "
+                    f"(needs pure Cs on A-site, single ion per site) — going straight to fallback"
+                )
             return None
         try:
             return self._query_materials_project(composition)
-        except Exception:
+        except Exception as e:
             # Network error, auth failure, no matching entry, an mp-api
             # interface change — any of it lands here. A search loop
-            # needs a bandgap back, not a stack trace, so this is a
-            # deliberate broad catch, not a lazy one.
+            # needs a bandgap back, not a stack trace, so this stays a
+            # deliberate broad catch — but with debug=True you see why.
+            if self.debug:
+                print(f"[MP debug] live lookup failed ({type(e).__name__}: {e}) — falling back")
             return None
 
     @staticmethod
@@ -110,7 +132,6 @@ class MaterialsProjectEvaluationBackend:
         return a_ion in _MP_SEARCHABLE_A_SITE
 
     def _query_materials_project(self, composition: PerovskiteComposition) -> Optional[float]:
-        """UNVERIFIED against a real account — see module docstring."""
         from mp_api.client import MPRester  # lazy import: mp-api is an
         # optional dependency (pip install -e ".[live]"), not required
         # just to import this module or use the offline path.
@@ -121,7 +142,16 @@ class MaterialsProjectEvaluationBackend:
         formula = f"{a_ion}{b_ion}{x_ion}3"
 
         with MPRester(api_key=self.api_key) as mpr:
-            docs = mpr.materials.summary.search(formula=formula, fields=["band_gap"])
+            # formula must be a list — mp-api validates the search kwargs
+            # and rejects a bare string; this was the original bug here.
+            docs = mpr.materials.summary.search(formula=[formula], fields=["band_gap"])
         if not docs:
+            if self.debug:
+                print(f"[MP debug] query for formula={formula!r} returned no matching entries")
             return None
-        return float(docs[0].band_gap)
+        band_gap = docs[0].band_gap
+        if band_gap is None:
+            if self.debug:
+                print(f"[MP debug] found an entry for {formula!r} but band_gap field is null")
+            return None
+        return float(band_gap)
